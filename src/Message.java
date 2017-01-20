@@ -9,6 +9,10 @@ public class Message implements Serializable, ByteArrayable {
 
     private static final long serialVersionUID = 8073741970285089526L;
 
+    public void setMessageType(MessageType messageType) {
+        this.messageType = messageType;
+    }
+
     /**
      * Type of message
      */
