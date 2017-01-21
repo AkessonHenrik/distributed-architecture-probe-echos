@@ -1,5 +1,17 @@
 /**
- * Created by Henrik on 20-Jan-17.
+ * User Interfacing class.
+ * This class handles User messages and notifications
+ * Once launched, waits for the user to enter a message. If the message exceeds 230 characters,
+ * the user will be prompted to enter another one.
+ * Once the message content is validated, it is send as a LOCAL message to the associated node.
+ *
+ * [COMMAND LINE ARGUMENTS]: one integer representing the Node id (in our context between 0 and 3)
+ *
+ * The listening part of this class is a separate thread that outputs received messages to the console
+ * Additional information is obtained through the config.properties file
+ *
+ * @author Henrik Akesson
+ * @author Fabien Salathe
  */
 
 import java.io.FileInputStream;
@@ -12,10 +24,8 @@ public class UserInterface {
 
     private Properties properties;
     private int nodePort;
-    private int id;
 
     private UserInterface(int id) throws IOException {
-        this.id = id;
         this.properties = new Properties();
         properties.load(new FileInputStream("config.properties"));
         int listeningPort = Integer.parseInt(properties.getProperty("uiListeningPort")) + id;
@@ -28,12 +38,12 @@ public class UserInterface {
     public static void main(String... args) {
 
         Scanner scanner = new Scanner(System.in);
-        String message = "";
+        String message;
         System.out.println("Enter message to send");
 
         try {
             UserInterface ui = new UserInterface(Integer.parseInt(args[0]));
-            while (!message.equals("exit")) {
+            while (true) {
                 message = scanner.nextLine();
                 if (message.length() <= 230)
                     ui.emit(message);
@@ -46,10 +56,10 @@ public class UserInterface {
     }
 
     private void emit(String messageContent) throws IOException {
-        Message message = new Message(MessageType.LOCAL, messageContent.getBytes());
+        Message message = new Message(MessageType.LOCAL, messageContent);
         InetAddress address = InetAddress.getByName(properties.getProperty("host"));
         DatagramPacket packet = new DatagramPacket(message.toByteArray(), message.toByteArray().length, address, nodePort);
-        DatagramSocket socket = new DatagramSocket(Integer.parseInt(properties.getProperty("uiEmitPort")) + id);
+        DatagramSocket socket = new DatagramSocket();
         socket.send(packet);
         socket.close();
     }
@@ -63,7 +73,7 @@ public class UserInterface {
                 while (true) {
                     socket.receive(packet);
                     Message message = Message.fromByteArray(packet.getData());
-                    System.out.println("Received: [" + message.getMessageType() + "] " + new String(message.getPayload()));
+                    System.out.println("Received: [" + message.getMessageType() + "] " + message.getContent());
                 }
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();

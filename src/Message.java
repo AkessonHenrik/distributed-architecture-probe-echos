@@ -1,5 +1,4 @@
 import java.io.*;
-import java.util.Arrays;
 
 /**
  * Message used to communicate between instances on the network.
@@ -8,6 +7,9 @@ import java.util.Arrays;
 public class Message implements Serializable, ByteArrayable {
 
     private static final long serialVersionUID = 8073741970285089526L;
+    private int sender;
+    private int id;
+    private String content;
 
     public void setMessageType(MessageType messageType) {
         this.messageType = messageType;
@@ -18,18 +20,30 @@ public class Message implements Serializable, ByteArrayable {
      */
     private MessageType messageType;
 
-    /**
-     * Message payload
-     */
-    private byte[] payload;
-
-    public Message(MessageType messageType, byte[] message) {
+    public Message(MessageType messageType, String content) {
         this.messageType = messageType;
-        this.payload = message;
+        this.content = content;
+        this.id = -1;
+        this.sender = -1;
     }
 
-    public byte[] getPayload() {
-        return payload;
+    public Message(MessageType messageType, String content, int id, int sender) {
+        this.messageType = messageType;
+        this.content = content;
+        this.id = id;
+        this.sender = sender;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setSender(int sender) {
+        this.sender = sender;
+    }
+
+    public String getContent() {
+        return content;
     }
 
     public MessageType getMessageType() {
@@ -40,15 +54,16 @@ public class Message implements Serializable, ByteArrayable {
         return (Message) ByteArrayable.fromByteArray(bytes);
     }
 
-    @Override
-    public String toString() {
-        return "Message{" +
-                "messageType=" + messageType +
-                ", payload=" + Arrays.toString(payload) +
-                '}';
+    public int getId() {
+        return this.id;
     }
 
-    public void setPayload(byte[] payload) {
-        this.payload = payload;
+    @Override
+    public String toString() {
+        return "[" + messageType + "]: " + "Content:" + content + ", Sender:" + sender + ", ID:" + id;
+    }
+
+    public int getSender() {
+        return this.sender;
     }
 }
