@@ -2,11 +2,12 @@ import java.io.*;
 
 /**
  * Message used to communicate between instances on the network.
- * Messages are serializable in order to be able to get a binary buffer to send to the network
+ *
+ * @author Henrik Akesson
+ * @author Fabien Salathe
  */
 public class Message implements Serializable, ByteArrayable {
 
-    private static final long serialVersionUID = 8073741970285089526L;
     private int sender;
     private int id;
     private String content;
@@ -20,6 +21,12 @@ public class Message implements Serializable, ByteArrayable {
      */
     private MessageType messageType;
 
+    /**
+     * This Constructor is used solely by the UserInterface class
+     * It is not a message sent through the network topology yet, so no sender and id are specified
+     * @param messageType
+     * @param content
+     */
     public Message(MessageType messageType, String content) {
         this.messageType = messageType;
         this.content = content;

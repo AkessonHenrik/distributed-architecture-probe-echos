@@ -1,11 +1,23 @@
-import javafx.util.Pair;
+/**
+ * Node class. Knows the network topology
+ *
+ * The node listens for messages, which are:
+ *  - LOCAL: Message from the UserInterface, only a string (no sender or id provided).
+ *           Signals the node to diffuse a new message to the rest of the network
+ *  - PROBE: New message received from another node.
+ *  - ECHO:  Response that a node sends to the emitter. A node receives one Echo for each PROBE sent.
+ *
+ * HOW TO LAUNCH: needs one command line argument, an integer representing the node id between 0 and 3
+ *                  example: "java Node 0"
+ *
+ * @author Henrik Akesson
+ * @author Fabien Salathe
+ */
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import javafx.util.Pair;
+import java.io.*;
 import java.net.*;
-import java.util.LinkedList;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 
 public class Node {
     private LinkedList<Pair<Integer, Integer>> L = new LinkedList<>();
@@ -37,6 +49,10 @@ public class Node {
         this.uiPort = Integer.parseInt(properties.getProperty("uiListeningPort")) + id;
     }
 
+    /**
+     * Listens for new messages and calls the appropriate method
+     * @throws IOException
+     */
     private void listen() throws IOException {
         byte[] buffer = new byte[256];
 
@@ -66,6 +82,11 @@ public class Node {
         }
     }
 
+    /**
+     * Handles ECHO type messages according to given algorithm
+     *
+     * @param message
+     */
     private synchronized void handleEcho(Message message) {
         for (Pair<Integer, Integer> pair : L) {
             if (pair.getKey() == message.getId()) {
@@ -78,6 +99,10 @@ public class Node {
         }
     }
 
+    /**
+     * Handles PROBE type messages according to given algorithm
+     * @param message
+     */
     private synchronized void handleProbe(Message message) {
         int ID = message.getId();
         boolean contains = false;
@@ -100,7 +125,7 @@ public class Node {
                 for (int i = 0; i < adjacentNodes.length; i++) {
                     if (adjacentNodes[i] && i != message.getSender()) {
                         int port = Integer.parseInt(properties.getProperty("nodeListeningPort")) + i;
-                        InetAddress address = InetAddress.getByName("localhost");
+                        InetAddress address = InetAddress.getByName(properties.getProperty("host"));
                         DatagramPacket packet = new DatagramPacket(messageToSend.toByteArray(), messageToSend.toByteArray().length, address, port);
                         socket.send(packet);
                     }
@@ -109,14 +134,14 @@ public class Node {
                 // Send Echo to emitter
                 messageToSend = new Message(MessageType.ECHO, message.getContent(), message.getId(), id);
                 int port = Integer.parseInt(properties.getProperty("nodeListeningPort")) + message.getSender();
-                InetAddress address = InetAddress.getByName("localhost");
+                InetAddress address = InetAddress.getByName(properties.getProperty("host"));
                 DatagramPacket packet = new DatagramPacket(messageToSend.toByteArray(), messageToSend.toByteArray().length, address, port);
                 socket.send(packet);
 
                 // Send message content to UserInterface
                 messageToSend = new Message(MessageType.ECHO, message.getContent(), message.getId(), id);
                 port = Integer.parseInt(properties.getProperty("uiListeningPort")) + message.getSender();
-                address = InetAddress.getByName("localhost");
+                address = InetAddress.getByName(properties.getProperty("host"));
                 packet = new DatagramPacket(messageToSend.toByteArray(), messageToSend.toByteArray().length, address, port);
                 socket.send(packet);
                 socket.close();
@@ -129,7 +154,12 @@ public class Node {
 
     }
 
+    /**
+     * Handles LOCAL type messages according to specification
+     * @param message
+     */
     private synchronized void handleLocal(Message message) {
+        // Generate random ID
         int ID = Math.abs(new Random(System.currentTimeMillis()).nextInt());
         L.add(new Pair<>(ID, nbNeighbors));
         message.setMessageType(MessageType.PROBE);
@@ -137,11 +167,13 @@ public class Node {
         message.setSender(id);
         try {
             DatagramSocket socket = new DatagramSocket();
+            // Determines which nodes it should send to. if adjacentNodes[i] == true, then Node i is connected to this one
+            // and a message should be sent to it
             boolean[] adjacentNodes = adjacencyMatrix[id];
             for (int i = 0; i < adjacentNodes.length; i++) {
                 if (adjacentNodes[i]) {
                     int port = Integer.parseInt(properties.getProperty("nodeListeningPort")) + i;
-                    InetAddress address = InetAddress.getByName("localhost");
+                    InetAddress address = InetAddress.getByName(properties.getProperty("host"));
                     DatagramPacket packet = new DatagramPacket(message.toByteArray(), message.toByteArray().length, address, port);
                     socket.send(packet);
                 }

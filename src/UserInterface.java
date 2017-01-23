@@ -55,6 +55,12 @@ public class UserInterface {
         }
     }
 
+    /**
+     * Emits a message to the associated node (the one with the same index)
+     *
+     * @param messageContent : Message to send
+     * @throws IOException
+     */
     private void emit(String messageContent) throws IOException {
         Message message = new Message(MessageType.LOCAL, messageContent);
         InetAddress address = InetAddress.getByName(properties.getProperty("host"));
@@ -64,6 +70,11 @@ public class UserInterface {
         socket.close();
     }
 
+    /**
+     * Launches a separate thread which listens for incoming messages
+     *
+     * @param listeningPort: Port that the listener should listen to
+     */
     private void launchListener(int listeningPort) {
         new Thread(() -> {
             try {
@@ -73,7 +84,7 @@ public class UserInterface {
                 while (true) {
                     socket.receive(packet);
                     Message message = Message.fromByteArray(packet.getData());
-                    System.out.println("Received: [" + message.getMessageType() + "] " + message.getContent());
+                    System.out.println(message);
                 }
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
