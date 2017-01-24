@@ -6,13 +6,13 @@ This program is used to diffuse messages between nodes in a graph. A user interf
 the user can enter a message that will then be sent to its associated node.
 The graph topology is:
 
-| 0 1 1 1 |
+|node 0|node 1|node 2|node 3|
+|:---:|:---:|:---:|:---:|
+|0|1|1|1|
+|1|0|1|0|
+|1|1|0|1|
+|1|0|1|0|
 
-| 1 0 1 0 |
-
-| 1 1 0 1 |
-
-| 1 0 1 0 |
 
 Every "Probe" message sent by a node receives in response an "Echo".
 
